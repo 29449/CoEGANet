@@ -136,7 +136,10 @@ python evaluate.py
 
 ## 📈 Experimental Results
 
-|      Reaction Type Unknown      |
+## 📊 Reaction Type Unknown Performance
+
+We evaluate CoEGANet under reaction type unknown setting.
+
 | Dataset | Top-1 | Top-3 | Top-5 |
 |---------|------:|------:|------:|
 | USPTO-50K | **55.4** | **78.0** | **85.0** |
