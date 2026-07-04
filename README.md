@@ -136,10 +136,11 @@ python evaluate.py
 
 ## 📈 Experimental Results
 
+|      Reaction Type Unknown      |
 | Dataset | Top-1 | Top-3 | Top-5 |
 |---------|------:|------:|------:|
 | USPTO-50K | **55.4** | **78.0** | **85.0** |
-| USPTO-Full | **67.9** | **88.2** | **92.6** |
+| USPTO-full | **45.2** | **60.3** | **68.4** |
 
 ---
 
