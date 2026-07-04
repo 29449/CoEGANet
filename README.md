@@ -136,7 +136,7 @@ python evaluate.py
 
 ## 📈 Experimental Results
 
-## 📊 Reaction Type Unknown Performance
+### Reaction Type Unknown Performance
 
 We evaluate CoEGANet under reaction type unknown setting.
 
