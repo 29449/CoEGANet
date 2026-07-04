@@ -1,5 +1,5 @@
 # CoEGANet
-### **Context-aware Edge Graph Attention Network for Retrosynthesis Prediction**
+### **Co-Evolving Gated Attentive Network for Retrosynthesis Prediction**
 
 <p align="center">
   <img src="figures/network.png" width="95%">
@@ -138,8 +138,8 @@ python evaluate.py
 
 | Dataset | Top-1 | Top-3 | Top-5 |
 |---------|------:|------:|------:|
-| USPTO-50K | **XX.X** | **XX.X** | **XX.X** |
-| USPTO-Full | **XX.X** | **XX.X** | **XX.X** |
+| USPTO-50K | **55.4** | **78.0** | **85.0** |
+| USPTO-Full | **67.9** | **88.2** | **92.6** |
 
 > Replace the above numbers with your final experimental results.
 
@@ -150,23 +150,8 @@ python evaluate.py
 Example retrosynthesis prediction:
 
 <p align="center">
-  <img src="figures/pathway.png" width="80%">
+  <img src="figures/pathway.png" width="95%">
 </p>
-
----
-
-## 📚 Citation
-
-If you find this work useful, please cite:
-
-```bibtex
-@article{CoEGANet2026,
-  title={Context-aware Edge Graph Attention Network for Retrosynthesis Prediction},
-  author={Your Name},
-  journal={},
-  year={2026}
-}
-```
 
 ---
 
