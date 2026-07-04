@@ -1,43 +1,187 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7837349.svg)](https://doi.org/10.5281/zenodo.7837349)
-# Graph2Edits
-## End-to-end graph neural network for retrosynthesis prediction via molecular graph editing.
-Inspired by the arrow-pushing formalism in chemical reaction mechanisms, we present a novel end-to-end architecture for retrosynthesis prediction, Graph2Edits, based on graph neural network to predict the edits of the product graph in an auto-regressive manner, and sequentially generates transformation intermediates and final reactants according to the predicted edits sequence. 
-## Environment Requirements  
-Create a virtual environment to run the code of Graph2Edits.
-Install pytorch with the cuda version that fits your device.
+# CoEGANet
+### **Context-aware Edge Graph Attention Network for Retrosynthesis Prediction**
+
+<p align="center">
+  <img src="figures/network.png" width="95%">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.9+-blue.svg">
+  <img src="https://img.shields.io/badge/PyTorch-2.x-red.svg">
+  <img src="https://img.shields.io/badge/RDKit-Latest-green.svg">
+  <img src="https://img.shields.io/badge/License-MIT-yellow.svg">
+</p>
+
+---
+
+## 📖 Overview
+
+CoEGANet is a graph neural network framework for retrosynthesis prediction via molecular graph editing.
+
+Unlike previous MPNN-based retrosynthesis models, CoEGANet explicitly enhances atom–bond interaction through an edge-aware graph attention mechanism and incorporates reaction state modeling to improve the prediction of reaction centers and edit sequences.
+
+The proposed framework is designed to provide:
+
+- 🔹 Rich atom–bond interaction modeling
+- 🔹 Context-aware edge graph attention
+- 🔹 Enhanced reaction state representation
+- 🔹 End-to-end retrosynthesis prediction
+
+---
+
+## ✨ Highlights
+
+- End-to-end graph editing framework for retrosynthesis prediction
+- Edge-aware graph attention network (CoEGAT)
+- Dynamic reaction state representation
+- PyTorch implementation
+- Easy-to-train and easy-to-extend framework
+
+---
+
+## 📂 Repository Structure
+
+```text
+CoEGANet/
+│
+├── configs/               # Training configurations
+├── datasets/              # Dataset preprocessing
+├── models/                # Model implementation
+├── scripts/               # Training / evaluation scripts
+├── utils/                 # Utility functions
+│
+├── train.py               # Model training
+├── predict.py             # Inference
+├── preprocess.py          # Data preprocessing
+│
+├── docs/                  # Figures for README
+├── checkpoints/           # Saved checkpoints
+├── README.md
+└── requirements.txt
 ```
-conda create -n graph2edits python=3.7 \
-conda activate graph2edits \
-conda install -c conda-forge rdkit=2019.09.2 \
-conda install pytorch==1.6.0 torchvision==0.7.0 cudatoolkit=10.1 -c pytorch \
-pip install numpy==1.17.3 \  
+
+---
+
+## ⚙️ Installation
+
+Create a conda environment:
+
+```bash
+conda create -n coeganet python=3.9
+conda activate coeganet
 ```
-## Data preprocessing
-1) generate the edit labels and the edits sequence for reaction
+
+Install PyTorch:
+
+```bash
+pip install torch torchvision
 ```
-python preprocess.py --mode train \
-python preprocess.py --mode valid \
-python preprocess.py --mode test \
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
 ```
-2) prepare the data for training
+
+---
+
+## 📦 Dataset
+
+The framework supports:
+
+- USPTO-50K
+- USPTO-Full
+
+Please preprocess the dataset before training.
+
+```bash
+python preprocess.py --mode train
+python preprocess.py --mode valid
+python preprocess.py --mode test
 ```
-python prepare_data.py
+
+---
+
+## 🚀 Training
+
+Train CoEGANet on USPTO-50K:
+
+```bash
+python train.py \
+    --dataset uspto_50k
 ```
-## Train Graph2Edits model
-Go to the graph2edits folder and run the following to train the model with specified dataset (default: USPTO_50k)
+
+Example for USPTO-Full:
+
+```bash
+python train.py \
+    --dataset uspto_full
 ```
-python train.py --dataset uspto_50k --use_rxn_class False
+
+---
+
+## 🔬 Inference
+
+```bash
+python predict.py
 ```
-The trained model will be saved at graph2edits/experiments/uspto_50k/without_rxn_class/
-## Evaluate using a trained model
-To evaluate the trained model, run
+
+or evaluate a trained checkpoint:
+
+```bash
+python evaluate.py
 ```
-python eval.py
+
+---
+
+## 📈 Experimental Results
+
+| Dataset | Top-1 | Top-3 | Top-5 |
+|---------|------:|------:|------:|
+| USPTO-50K | **XX.X** | **XX.X** | **XX.X** |
+| USPTO-Full | **XX.X** | **XX.X** | **XX.X** |
+
+> Replace the above numbers with your final experimental results.
+
+---
+
+## 🖼 Visualization
+
+Example retrosynthesis prediction:
+
+<p align="center">
+  <img src="figures/pathway.png" width="80%">
+</p>
+
+---
+
+## 📚 Citation
+
+If you find this work useful, please cite:
+
+```bibtex
+@article{CoEGANet2026,
+  title={Context-aware Edge Graph Attention Network for Retrosynthesis Prediction},
+  author={Your Name},
+  journal={},
+  year={2026}
+}
 ```
-to get the raw prediction file saved at graph2edits/experiments/.../pred_results.txt
-## Reproducing our results
-To reproduce our results, run
-```
-python eval.py --dataset uspto_50k --use_rxn_class False or True --experiments 27-06-2022--10-27-22 or 30-06-2022--00-19-29
-```
-This will display the results for reaction class unknown and known setting
+
+---
+
+## 📄 License
+
+This project is released under the MIT License.
+
+---
+
+## 🙏 Acknowledgements
+
+This project is developed based on
+
+- PyTorch
+- RDKit
+- DGL
+
+Special thanks to the open-source community.
