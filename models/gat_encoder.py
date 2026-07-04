@@ -40,9 +40,6 @@ class GATEncoder(nn.Module):
         self.W_o = nn.Sequential(nn.Linear(self.hidden_size, self.hidden_size), nn.ReLU()) # 中间层原子隐藏表示的线性转换层
         self.W_p = nn.Sequential(nn.Linear(self.atom_fdim + self.hidden_size, self.hidden_size), nn.ReLU()) # 最终层输出原子隐藏表示的线性转换层
         self.dropout_layer = nn.Dropout(p=self.dropout) # 丢弃层
-        # self.edge_fuse = nn.Linear(self.hidden_size, self.hidden_size)
-        # self.edge_gru = nn.GRUCell(self.hidden_size, self.hidden_size)
-
 
         if self.alpha_input == 'scalar_gate_e0_el':
             self.gate_b = nn.Linear(2 * self.hidden_size, 1) # 标量门控
@@ -56,9 +53,6 @@ class GATEncoder(nn.Module):
         else:
             self.att_vector = nn.Parameter(torch.randn(self.num_heads, self.hidden_size * 3))
         nn.init.xavier_uniform_(self.att_vector) # 初始化注意力向量
-
-        # self.atom_gate = nn.Linear(2 * self.hidden_size, self.hidden_size)
-        # nn.init.constant_(self.atom_gate.bias, -1.0)
 
 
     def forward(self, graph_tensors: Tuple[torch.Tensor], mask: torch.Tensor) -> torch.FloatTensor:
@@ -117,37 +111,23 @@ class GATEncoder(nn.Module):
                 z_ij = torch.cat([h_i_prev, h_j_prev, input_b], dim=1)  # num_bonds x 3H
             
             logits = F.leaky_relu(F.linear(z_ij, self.att_vector), negative_slope=0.2) # num_heads x num_bonds
-            
+            exp_c = torch.exp(logits)  # [num_bonds, num_heads]
+            denom = torch.zeros(num_atoms, self.num_heads, device=exp_c.device, dtype=exp_c.dtype)
+
             if self.alpha_apply_mode == 'h_attn':
-                exp_c = torch.exp(logits)  # [num_bonds, num_heads]
-                denom = torch.zeros(num_atoms, self.num_heads, device=exp_c.device, dtype=exp_c.dtype)
                 denom.index_add_(0, src_atoms, exp_c)  # 聚合到每个源节点 [num_atoms, num_heads]
                 norm = exp_c / (denom[src_atoms] + 1e-8)  # [num_bonds, num_heads]
-                alpha = norm.mean(dim=1, keepdim=True)  # 平均多头结果：[num_bonds, 1]
+            else:
+                denom.index_add_(0, dst_atoms, exp_c)  # 聚合到每个目标节点 [num_atoms, num_heads]
+                norm = exp_c / (denom[dst_atoms] + 1e-8)  # [num_bonds, num_heads]
 
-            if self.alpha_apply_mode in ['m_attn', 'm_out_attn']:
-                # 消息阶段 α_msg（平滑）
-                tau_msg = 2.0
-                exp_c_msg = torch.exp(logits / tau_msg)
-                denom_msg = torch.zeros(num_atoms, self.num_heads, device=exp_c_msg.device, dtype=exp_c_msg.dtype)
-                denom_msg.index_add_(0, src_atoms, exp_c_msg)
-                alpha_msg = exp_c_msg / (denom_msg[src_atoms] + 1e-8)
-                alpha_msg = alpha_msg.mean(dim=1, keepdim=True)  # 平均多头结果：[num_bonds, 1]
-
-            if self.alpha_apply_mode in ['out_attn', 'm_out_attn']:
-                # 消息阶段 α_out（稀疏）
-                tau_out = 0.5
-                exp_c_out = torch.exp(logits / tau_out)
-                denom_out = torch.zeros(num_atoms, self.num_heads, device=exp_c_out.device, dtype=exp_c_out.dtype)
-                denom_out.index_add_(0, dst_atoms, exp_c_out)
-                alpha_out = exp_c_out / (denom_out[dst_atoms] + 1e-8)
-                alpha_out = alpha_out.mean(dim=1, keepdim=True)  # 平均多头结果：[num_bonds, 1]
+            alpha = norm.mean(dim=1, keepdim=True)  # 平均多头结果：[num_bonds, 1]
 
             # 计算消息
             nei_a_message = index_select_ND(prev_bond_hidden, a2b)
 
             if self.alpha_apply_mode in ['m_attn', 'm_out_attn']:
-                nei_alpha = index_select_ND(alpha_msg, a2b) # num_atoms x max_num_bonds x hidden
+                nei_alpha = index_select_ND(alpha, a2b) # num_atoms x max_num_bonds x hidden
                 a_message = (nei_alpha * nei_a_message).sum(dim=1)  # num_atoms x hidden
             else:
                 a_message = nei_a_message.sum(dim=1)  # num_atoms x hidden
@@ -156,8 +136,8 @@ class GATEncoder(nn.Module):
             m = a_message[b2a] - rev_message
 
             # GRU门控更新
+            input_attn = alpha * input_b
             if self.alpha_apply_mode == 'h_attn':
-                input_attn = alpha * input_b
                 message = self.gru(input_attn, m)  # num_bonds x hidden_size
             else:
                 message = self.gru(input_b, m)  # num_bonds x hidden_size
@@ -169,31 +149,17 @@ class GATEncoder(nn.Module):
             nei_a_message = index_select_ND(message, a2b)
 
             if self.alpha_apply_mode in ['out_attn', 'm_out_attn']:
-                nei_alpha = index_select_ND(alpha_out, a2b) # num_atoms x max_num_bonds x hidden
+                nei_alpha = index_select_ND(alpha, a2b) # num_atoms x max_num_bonds x hidden
                 a_message = (nei_alpha * nei_a_message).sum(dim=1)  # num_atoms x hidden
             else:
                 a_message = nei_a_message.sum(dim=1)  # num_atoms x hidden
 
             if depth != self.depth - 1:
                 atom_hiddens = self.W_o(a_message)
-                # atom_hiddens = atom_hiddens + prev_atom_hiddens
-                # gate = torch.sigmoid(
-                #     self.atom_gate(
-                #         torch.cat([prev_atom_hiddens, atom_hiddens], dim=-1)
-                #     )
-                # )
-                # atom_hiddens = gate * atom_hiddens + (1 - gate) * prev_atom_hiddens
             else:
                 a_input = torch.cat([f_atoms, a_message], dim=1)
                 atom_hiddens = self.W_p(a_input)  # num_atoms x hidden
 
             prev_atom_hiddens = atom_hiddens
-            
-            # edge_input = self.edge_fuse(atom_hiddens[b2a])
-            # message = self.edge_gru(edge_input, message)
-
-        if mask is None:
-            mask = torch.ones(atom_hiddens.size(0), 1, device=f_atoms.device)
-            mask[0, 0] = 0  # first node is padding
 
         return atom_hiddens * mask
