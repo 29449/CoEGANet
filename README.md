@@ -141,8 +141,6 @@ python evaluate.py
 | USPTO-50K | **55.4** | **78.0** | **85.0** |
 | USPTO-Full | **67.9** | **88.2** | **92.6** |
 
-> Replace the above numbers with your final experimental results.
-
 ---
 
 ## 🖼 Visualization
